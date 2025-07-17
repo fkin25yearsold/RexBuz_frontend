@@ -1,0 +1,95 @@
+export const trendingCampaigns = [
+  {
+    id: 1,
+    title: "Summer Fashion Collection 2024",
+    brand: "StyleHub",
+    platform: "Instagram",
+    budget: "₹75K-₹1L",
+    image:
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
+    tags: ["Fashion", "Lifestyle", "Summer"],
+    deadline: "2024-08-15",
+    applications: 234,
+    category: "Fashion",
+  },
+  {
+    id: 2,
+    title: "Tech Product Launch Campaign",
+    brand: "TechNova",
+    platform: "YouTube",
+    budget: "₹1L-₹2L",
+    image:
+      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop",
+    tags: ["Tech", "Review", "Launch"],
+    deadline: "2024-08-20",
+    applications: 156,
+    category: "Technology",
+  },
+  {
+    id: 3,
+    title: "Skincare Routine Challenge",
+    brand: "GlowUp Beauty",
+    platform: "TikTok",
+    budget: "₹40K-₹60K",
+    image:
+      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=300&fit=crop",
+    tags: ["Beauty", "Skincare", "Challenge"],
+    deadline: "2024-08-10",
+    applications: 189,
+    category: "Beauty",
+  },
+  {
+    id: 4,
+    title: "Fitness Transformation Series",
+    brand: "FitLife Pro",
+    platform: "Instagram",
+    budget: "₹50K-₹80K",
+    image:
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop",
+    tags: ["Fitness", "Health", "Transformation"],
+    deadline: "2024-08-25",
+    applications: 278,
+    category: "Health",
+  },
+  {
+    id: 5,
+    title: "Travel Vlog Series",
+    brand: "Wanderlust Tours",
+    platform: "YouTube",
+    budget: "₹1L-₹1.5L",
+    image:
+      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop",
+    tags: ["Travel", "Adventure", "Vlog"],
+    deadline: "2024-09-01",
+    applications: 145,
+    category: "Travel",
+  },
+  {
+    id: 6,
+    title: "Food Recipe Challenge",
+    brand: "Tasty Bites",
+    platform: "Instagram",
+    budget: "₹30K-₹45K",
+    image:
+      "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop",
+    tags: ["Food", "Recipe", "Cooking"],
+    deadline: "2024-08-18",
+    applications: 203,
+    category: "Food",
+  },
+];
+
+export const campaignFilters = {
+  platforms: ["All", "Instagram", "YouTube", "TikTok", "Twitter"],
+  budgets: ["All", "₹25K-₹50K", "₹50K-₹1L", "₹1L-₹2L", "₹2L+"],
+  categories: [
+    "All",
+    "Fashion",
+    "Technology",
+    "Beauty",
+    "Health",
+    "Travel",
+    "Food",
+    "Lifestyle",
+  ],
+};
