@@ -48,17 +48,17 @@ I've completely redesigned the OTP verification page according to your specifica
 ### **Request OTP Endpoint**
 
 ```javascript
-POST https://bc282d8ad0e2.ngrok-free.app/api/v1/auth/request-otp
+POST https://986f68cc5cd6.ngrok-free.app/api/v1/auth/request-otp
 ```
 
 ### **Individual Verification Endpoints**
 
 ```javascript
 // Email verification
-POST https://bc282d8ad0e2.ngrok-free.app/api/v1/auth/verify-otp/email
+POST https://986f68cc5cd6.ngrok-free.app/api/v1/auth/verify-otp/email
 
 // Phone verification
-POST https://bc282d8ad0e2.ngrok-free.app/api/v1/auth/verify-otp/phone
+POST https://986f68cc5cd6.ngrok-free.app/api/v1/auth/verify-otp/phone
 ```
 
 ### **Error Handling**

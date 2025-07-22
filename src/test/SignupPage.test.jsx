@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import SignupPage from "../components/pages/SignupPage";
+import { API_ENDPOINTS } from "../config/api";
 
 // Mock fetch for API calls
 global.fetch = vi.fn();
@@ -241,7 +242,7 @@ describe("SignupPage", () => {
     // Check if API was called
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup",
+        API_ENDPOINTS.AUTH.SIGNUP,
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({

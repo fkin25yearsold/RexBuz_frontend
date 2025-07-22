@@ -14,7 +14,7 @@ const testSignupAPI = async () => {
   try {
     console.log("Testing signup API...");
     const response = await fetch(
-      "https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup",
+      "https://986f68cc5cd6.ngrok-free.app/api/v1/auth/signup",
       {
         method: "POST",
         headers: {

@@ -4,7 +4,7 @@ import { useUser } from "../../contexts/UserContext";
 import Button from "../common/Button";
 import ThemeToggle from "../ThemeToggle";
 import PasswordStrengthMeter from "../common/PasswordStrengthMeter";
-import { API_ENDPOINTS, apiRequest } from "../../config/api";
+import { API_ENDPOINTS, apiRequest, safeJsonParse } from "../../config/api";
 
 // Mock API - replace with actual API call
 const mockCreatorsList = [];
@@ -229,13 +229,13 @@ const SignupPage = () => {
         body: JSON.stringify(apiData),
       });
 
-      const data = await response.json();
+      const data = await safeJsonParse(response);
 
       if (!response.ok) {
         // Handle specific API errors
         if (
           response.status === 400 &&
-          data.detail?.includes("Email already registered")
+          data?.detail?.includes("Email already registered")
         ) {
           throw new Error(
             "This email is already registered. Please try signing in instead.",
@@ -286,12 +286,12 @@ const SignupPage = () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await safeJsonParse(response);
 
       if (!response.ok) {
         throw new Error(
-          data.error?.message ||
-            data.detail ||
+          data?.error?.message ||
+            data?.detail ||
             `Failed to send ${otpType} OTP. Please try again.`,
         );
       }
@@ -763,12 +763,8 @@ const SignupPage = () => {
                   }`}
                 >
                   <span className="text-base sm:text-lg">{tab.icon}</span>
-                  <span className="hidden xs:inline sm:inline">
-                    {tab.label}
-                  </span>
-                  <span className="xs:hidden sm:hidden text-xs">
-                    {tab.label}
-                  </span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden text-xs">{tab.label}</span>
                 </button>
               ))}
             </div>

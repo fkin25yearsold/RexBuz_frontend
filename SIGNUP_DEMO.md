@@ -35,7 +35,7 @@ A comprehensive, modern signup page has been successfully created for the Influb
 
 ### 🌐 API Integration
 
-- ✅ **Live API Connection**: Connects to https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup
+- ✅ **Live API Connection**: Connects to https://986f68cc5cd6.ngrok-free.app/api/v1/auth/signup
 - ✅ **Comprehensive Error Handling**: Handles all API error scenarios
 - ✅ **Rate Limiting Support**: Graceful handling of too many requests
 - ✅ **Network Error Recovery**: Retry logic and user-friendly messages
@@ -61,7 +61,7 @@ src/components/common/PasswordStrengthMeter.js - Password strength indicator
 
 ### API Integration Details
 
-- **Endpoint**: `https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup`
+- **Endpoint**: `https://986f68cc5cd6.ngrok-free.app/api/v1/auth/signup`
 - **Method**: POST
 - **Headers**: Content-Type, Accept, ngrok-skip-browser-warning
 - **Data Mapping**: Frontend fields → API required format
