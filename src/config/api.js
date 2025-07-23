@@ -1,10 +1,12 @@
 // API Configuration
-// Centralized API configuration that can be easily changed via environment variables
-import { ACTIVE_NGROK_URL } from "./ngrok-urls.js";
+
+// Centralized API configuration using environment settings
+import { getCurrentBaseURL, getCurrentHeaders } from "./environment.js";
 
 const API_CONFIG = {
-  // Base URL - can be overridden by environment variable
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || ACTIVE_NGROK_URL,
+  // Base URL from environment configuration
+  BASE_URL: getCurrentBaseURL(),
+
 
   // API Version
   VERSION: "v1",
@@ -12,11 +14,8 @@ const API_CONFIG = {
   // Timeout settings
   TIMEOUT: 60000, // 60 seconds
 
-  // Request headers
-  DEFAULT_HEADERS: {
-    "Content-Type": "application/json",
-    "User-Agent": "Influbazzar-Frontend/1.0.0",
-  },
+  // Request headers from environment configuration
+  DEFAULT_HEADERS: getCurrentHeaders(),
 };
 
 // API Endpoints
@@ -178,13 +177,21 @@ export const apiRequest = async (url, options = {}) => {
     }
   }
 
-  // Build proper fetch configuration with enhanced ngrok headers
+
+  // Build proper fetch configuration with Railway-optimized headers
+
   const config = {
     method: options.method || "GET",
     mode: "cors",
     credentials: "include",
     headers: {
       Accept: "application/json",
+      "User-Agent": "Influbazzar-Frontend/1.0.0",
+      "Cache-Control": "no-cache",
+      // Railway-specific headers
+      "X-Requested-With": "XMLHttpRequest",
+      "Access-Control-Allow-Credentials": "true",
+      // Keep ngrok header for backward compatibility during testing
       "ngrok-skip-browser-warning": "true",
       "User-Agent": "Influbazzar-Frontend/1.0.0",
       // Additional headers that might help with ngrok

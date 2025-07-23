@@ -416,8 +416,10 @@ const OnboardingStep2 = ({
 
     try {
       // Import the test function
-      const { testNgrokUrl } = await import("../../../config/ngrok-urls");
-      const isConnected = await testNgrokUrl();
+
+      const { testApiUrl } = await import("../../../config/api-urls");
+      const isConnected = await testApiUrl();
+
 
       if (isConnected) {
         setSuccess("✅ API connectivity test passed!");
