@@ -1,10 +1,12 @@
 // API Configuration
+
 // Centralized API configuration using environment settings
 import { getCurrentBaseURL, getCurrentHeaders } from "./environment.js";
 
 const API_CONFIG = {
   // Base URL from environment configuration
   BASE_URL: getCurrentBaseURL(),
+
 
   // API Version
   VERSION: "v1",
@@ -175,7 +177,9 @@ export const apiRequest = async (url, options = {}) => {
     }
   }
 
+
   // Build proper fetch configuration with Railway-optimized headers
+
   const config = {
     method: options.method || "GET",
     mode: "cors",
@@ -189,6 +193,9 @@ export const apiRequest = async (url, options = {}) => {
       "Access-Control-Allow-Credentials": "true",
       // Keep ngrok header for backward compatibility during testing
       "ngrok-skip-browser-warning": "true",
+      "User-Agent": "Influbazzar-Frontend/1.0.0",
+      // Additional headers that might help with ngrok
+      "X-Requested-With": "XMLHttpRequest",
       ...resolvedHeaders,
     },
     ...(options.body && { body: options.body }),

@@ -14,7 +14,9 @@ const testSignupAPI = async () => {
   try {
     console.log("Testing signup API...");
     const response = await fetch(
+
       "https://buz-production.up.railway.app/api/v1/auth/signup",
+
       {
         method: "POST",
         headers: {

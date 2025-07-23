@@ -5,9 +5,11 @@ export const debugNgrokConnectivity = async () => {
   console.log("🔍 Starting ngrok connectivity diagnostics...");
 
   // Import from config instead of hardcoding
+
   const { API_URLS } = await import("./config/api-urls.js");
   const ngrokUrl = API_URLS.PRODUCTION;
   const oldNgrokUrl = API_URLS.LEGACY;
+
 
   const testUrl = async (url, description) => {
     console.log(`\n🧪 Testing ${description}: ${url}`);

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { testApiConnectivity } from "../../config/api.js";
+
 import { ACTIVE_API_URL } from "../../config/api-urls.js";
+
 
 const CorsDebugger = () => {
   const [results, setResults] = useState(null);
@@ -8,7 +10,9 @@ const CorsDebugger = () => {
 
   const runTests = async () => {
     setTesting(true);
+
     console.log("🧪 Testing API connectivity for URL:", ACTIVE_API_URL);
+
 
     try {
       // Run the comprehensive connectivity test
@@ -18,7 +22,9 @@ const CorsDebugger = () => {
       let corsTest = { success: false, error: null };
       try {
         const response = await fetch(
+
           `${ACTIVE_API_URL}/api/v1/creator/onboarding/step1/basic-profile`,
+
           {
             method: "POST",
             mode: "cors",
@@ -65,7 +71,9 @@ const CorsDebugger = () => {
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         Testing URL:{" "}
         <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+
           {ACTIVE_API_URL}
+
         </code>
       </p>
 

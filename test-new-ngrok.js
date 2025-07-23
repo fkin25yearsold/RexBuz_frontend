@@ -2,7 +2,9 @@
 const testNgrokConnectivity = async () => {
   console.log("Testing ngrok connectivity...");
 
+
   const url = "https://buz-production.up.railway.app";
+
 
   try {
     console.log("Testing basic connectivity to:", url);
@@ -35,7 +37,9 @@ const testNgrokConnectivity = async () => {
 const testApiEndpoint = async () => {
   console.log("Testing API endpoint...");
 
+
   const url = "https://buz-production.up.railway.app/api/v1/auth/login";
+
 
   try {
     const controller = new AbortController();
