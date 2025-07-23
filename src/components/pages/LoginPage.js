@@ -6,6 +6,7 @@ import Button from "../common/Button";
 import {
   API_ENDPOINTS,
   apiRequest,
+  safeJsonParse,
   tokenManager,
   rateLimitTracker,
   testApiConnectivity,
@@ -259,15 +260,17 @@ const LoginPage = () => {
 
       console.log("📡 Response received:", response.status);
 
+      // Read the response body once and handle both success and error cases
+      const responseData = await safeJsonParse(response);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log("❌ Error response:", errorData);
+        console.log("❌ Error response:", responseData);
 
         // Handle new API error response format
         const errorMessage =
-          errorData.error?.message ||
-          errorData.detail ||
-          errorData.message ||
+          responseData.error?.message ||
+          responseData.detail ||
+          responseData.message ||
           "Login failed";
 
         // Handle specific error cases
@@ -285,7 +288,7 @@ const LoginPage = () => {
           }
         } else if (response.status === 422) {
           // Validation error - extract field details
-          const validationErrors = errorData.error?.details || [];
+          const validationErrors = responseData.error?.details || [];
           if (validationErrors.length > 0) {
             const fieldErrors = validationErrors
               .map((err) => err.message)
@@ -295,7 +298,7 @@ const LoginPage = () => {
             setApiError(errorMessage);
           }
         } else if (response.status === 403) {
-          if (errorData.error?.code === "VERIFICATION_REQUIRED") {
+          if (responseData.error?.code === "VERIFICATION_REQUIRED") {
             setApiError(
               "Account verification required. Please verify your email and phone number.",
             );
@@ -316,15 +319,15 @@ const LoginPage = () => {
         return;
       }
 
-      const responseData = await response.json();
       console.log("📦 Login response data:", responseData);
 
-      // Handle the new API response structure with nested data
-      const user = responseData.data?.user || responseData.user;
-      const tokens = responseData.data?.tokens || {
+      // Handle the new API response structure
+      const user = responseData.user;
+      const tokens = {
         access_token: responseData.access_token,
         refresh_token: responseData.refresh_token,
       };
+      const onboarding = responseData.onboarding;
 
       if (!user || !tokens.access_token) {
         console.error("❌ Invalid response structure:", responseData);
@@ -336,12 +339,10 @@ const LoginPage = () => {
       console.log("🔑 Tokens:", {
         access_token: tokens.access_token ? "present" : "missing",
       });
+      console.log("📋 Onboarding data:", onboarding);
 
-      // Use AuthContext to manage authentication state
-      const loginSuccess = login(user, {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-      });
+      // Use AuthContext to manage authentication state with onboarding data
+      const loginSuccess = await login(user, tokens, onboarding);
 
       if (!loginSuccess) {
         setApiError("Failed to save login session. Please try again.");
@@ -355,13 +356,48 @@ const LoginPage = () => {
       setFailedAttempts(0);
       setIsAccountLocked(false);
 
-      // Redirect based on user verification status
+      // Redirect based on user verification and onboarding status
       if (!user.is_verified) {
         // Redirect to verification page
         window.navigateToOtp && window.navigateToOtp();
       } else {
-        // Redirect to login success page
-        window.navigateToLoginSuccess && window.navigateToLoginSuccess();
+        // Check onboarding status for routing decision
+        if (onboarding && onboarding.onboarding_required === true) {
+          // User needs to complete onboarding
+          const nextStep = onboarding.next_step?.step || 1;
+          const progress = onboarding.completion_percentage || 0;
+
+          console.log(
+            `🎯 Onboarding required - redirecting to step ${nextStep}`,
+          );
+          console.log(`📊 Current progress: ${progress}%`);
+          console.log(`💬 Guidance: ${onboarding.message}`);
+
+          // Show brief success message before redirect
+          setApiError(
+            `✅ Login successful! Redirecting to complete your onboarding (${progress}% done)...`,
+          );
+
+          // Small delay to show message, then redirect
+          setTimeout(() => {
+            window.location.hash = "#creator-onboarding";
+          }, 1500);
+        } else {
+          // User can access main dashboard
+          console.log(
+            "🎉 Login successful - onboarding complete, redirecting to dashboard",
+          );
+
+          // Show success message
+          setApiError(
+            "✅ Login successful! Welcome to your creator dashboard...",
+          );
+
+          // Small delay to show message, then redirect
+          setTimeout(() => {
+            window.location.hash = "#dashboard";
+          }, 1500);
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -442,21 +478,18 @@ const LoginPage = () => {
     // First, try a direct fetch to bypass our API wrapper
     console.log("🧪 Direct fetch test to login endpoint...");
     try {
-      const directResponse = await fetch(
-        "https://b2ff7ff9d63e.ngrok-free.app/api/v1/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-          },
-          body: JSON.stringify({
-            email_or_phone: "test@test.com",
-            password: "test123",
-            remember_me: false,
-          }),
+      const directResponse = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
         },
-      );
+        body: JSON.stringify({
+          email_or_phone: "test@test.com",
+          password: "test123",
+          remember_me: false,
+        }),
+      });
 
       console.log("✅ Direct fetch successful! Status:", directResponse.status);
       setApiError(
@@ -466,7 +499,7 @@ const LoginPage = () => {
     } catch (directError) {
       console.error("❌ Direct fetch failed:", directError);
       setApiError(
-        `❌ Direct fetch failed: ${directError.message}\n\nThis confirms the ngrok URL is not accessible.\n\n💡 Solutions:\n1. Check if ngrok tunnel is running\n2. Get a new ngrok URL from backend team\n3. Verify backend server is running\n\nCurrent URL: https://b2ff7ff9d63e.ngrok-free.app`,
+        `❌ Direct fetch failed: ${directError.message}\n\nThis confirms the ngrok URL is not accessible.\n\n💡 Solutions:\n1. Check if ngrok tunnel is running\n2. Get a new ngrok URL from backend team\n3. Verify backend server is running\n\nCurrent URL: ${API_ENDPOINTS.AUTH.LOGIN}`,
       );
       return;
     }
@@ -536,7 +569,7 @@ const LoginPage = () => {
 
       setApiError(message);
     } catch (error) {
-      setApiError(`❌ Connectivity test failed: ${error.message}`);
+      setApiError(`��� Connectivity test failed: ${error.message}`);
     }
   };
 
@@ -687,10 +720,22 @@ const LoginPage = () => {
               : "bg-white border border-gray-200"
           }`}
         >
-          {/* API Error Display */}
+          {/* API Error/Success Display */}
           {apiError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-sm text-red-700">{apiError}</div>
+            <div
+              className={`${
+                apiError.startsWith("✅")
+                  ? "bg-green-50 border border-green-200"
+                  : "bg-red-50 border border-red-200"
+              } rounded-lg p-4`}
+            >
+              <div
+                className={`text-sm ${
+                  apiError.startsWith("✅") ? "text-green-700" : "text-red-700"
+                }`}
+              >
+                {apiError}
+              </div>
             </div>
           )}
 
@@ -865,7 +910,7 @@ const LoginPage = () => {
                   console.log("🧪 Testing signup endpoint...");
                   try {
                     const signupResponse = await fetch(
-                      "https://b2ff7ff9d63e.ngrok-free.app/api/v1/auth/signup",
+                      API_ENDPOINTS.AUTH.SIGNUP,
                       {
                         method: "POST",
                         headers: {

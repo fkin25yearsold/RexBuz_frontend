@@ -1,22 +1,19 @@
 // API Configuration
-// Centralized API configuration that can be easily changed via environment variables
+// Centralized API configuration using environment settings
+import { getCurrentBaseURL, getCurrentHeaders } from "./environment.js";
 
 const API_CONFIG = {
-  // Base URL - can be overridden by environment variable
-  BASE_URL:
-    import.meta.env.VITE_API_BASE_URL || "https://b2ff7ff9d63e.ngrok-free.app",
+  // Base URL from environment configuration
+  BASE_URL: getCurrentBaseURL(),
 
   // API Version
   VERSION: "v1",
 
   // Timeout settings
-  TIMEOUT: 30000, // 30 seconds
+  TIMEOUT: 60000, // 60 seconds
 
-  // Request headers
-  DEFAULT_HEADERS: {
-    "Content-Type": "application/json",
-    "User-Agent": "Influbazzar-Frontend/1.0.0",
-  },
+  // Request headers from environment configuration
+  DEFAULT_HEADERS: getCurrentHeaders(),
 };
 
 // API Endpoints
@@ -40,6 +37,114 @@ export const API_ENDPOINTS = {
     UPDATE_PROFILE: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/user/profile`,
     CHANGE_PASSWORD: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/user/change-password`,
   },
+
+  // Creator Onboarding endpoints
+  CREATOR_ONBOARDING: {
+    STATUS: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/status`,
+    CHECK_DISPLAY_NAME: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/display-name/check`,
+    STEP1_BASIC_PROFILE: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step1/basic-profile`,
+    STEP2_SOCIAL_MEDIA: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step2/social-media`,
+    STEP3_NICHE_PREFERENCES: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step3/niche-preferences`,
+    STEP4_PORTFOLIO: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step4/portfolio`,
+    STEP5_VERIFICATION: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step5/verification`,
+    STEP6_PLATFORM_PREFERENCES: `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}/creator/onboarding/step6/platform-preferences`,
+
+
+  },
+};
+
+// Safe JSON parsing utility to prevent "body stream already read" errors
+// This reads the response as text first, then parses JSON manually
+export const safeJsonParse = async (response) => {
+  try {
+    // Check if the response body has already been consumed
+    if (response.bodyUsed) {
+      // Try to extract cached data if available
+      if (response._parsedJSON !== undefined) {
+        return response._parsedJSON;
+      }
+
+      // For backend 4xx/5xx errors, return a generic error object instead of throwing
+      if (response.status >= 400) {
+        console.warn(`Backend error ${response.status}, returning generic error object`);
+        const genericError = { error: { message: `${response.status >= 500 ? 'Server' : 'Client'} error (${response.status})` } };
+        response._parsedJSON = genericError;
+        return genericError;
+      }
+
+      throw new Error(`Response body was already consumed. Status: ${response.status}`);
+    }
+
+    // Read the response as text first to avoid "body stream already read" errors
+    const textContent = await response.text();
+
+    // Cache the parsed result on the response object for potential reuse
+    let parsedJSON;
+
+    // If the response is empty, return null
+    if (!textContent.trim()) {
+      console.warn("Empty response received from server");
+      parsedJSON = null;
+      response._parsedJSON = parsedJSON;
+      return parsedJSON;
+    }
+
+    // Try to parse as JSON
+    try {
+      parsedJSON = JSON.parse(textContent);
+      response._parsedJSON = parsedJSON;
+      return parsedJSON;
+    } catch (parseError) {
+      console.error("Failed to parse response as JSON:", parseError);
+      console.error("Response status:", response.status, response.statusText);
+      console.error("Response text content:", textContent.substring(0, 500) + (textContent.length > 500 ? "..." : ""));
+
+      // Check if it's an HTML error page
+      if (textContent.includes('<html>') || textContent.includes('<!DOCTYPE')) {
+        throw new Error(`Server error (${response.status}): The server returned an HTML error page instead of JSON. This typically indicates a server-side issue.`);
+      }
+
+      // Cache the error information
+      response._parsedJSON = null;
+      response._parseError = parseError;
+
+      // For 4xx/5xx errors, return a generic error object - don't throw
+      if (response.status >= 400) {
+        console.warn(`Backend error ${response.status}, invalid JSON response`);
+        const genericError = { error: { message: `${response.status >= 500 ? 'Server' : 'Client'} error (${response.status})` } };
+        response._parsedJSON = genericError;
+        return genericError;
+      } else {
+        throw new Error(`Invalid JSON response from server (${response.status}): ${parseError.message}`);
+      }
+    }
+  } catch (textError) {
+    console.error("Failed to read response as text:", textError);
+    console.error("Response status:", response.status, response.statusText);
+
+    // This could happen if the body stream was already consumed
+    if (textError.message && textError.message.includes('body stream already read')) {
+      // For backend 4xx/5xx errors, return a generic error object instead of throwing
+      if (response.status >= 400) {
+        console.warn(`Backend error ${response.status}, body already consumed`);
+        const genericError = { error: { message: `${response.status >= 500 ? 'Server' : 'Client'} error (${response.status})` } };
+        response._parsedJSON = genericError;
+        return genericError;
+      }
+
+      throw new Error(`Response body was already consumed. Status: ${response.status}`);
+    }
+
+    // For other text reading errors on 4xx/5xx, also return generic error
+    if (response.status >= 400) {
+      console.warn(`Backend error ${response.status}, failed to read response`);
+      const genericError = { error: { message: `${response.status >= 500 ? 'Server' : 'Client'} error (${response.status})` } };
+      response._parsedJSON = genericError;
+      return genericError;
+    }
+
+    throw new Error(`Failed to read response from server (${response.status}): ${textError.message}`);
+  }
 };
 
 // API Helper functions
@@ -48,6 +153,13 @@ export const apiRequest = async (url, options = {}) => {
 
   // Extract timeout from options or use default
   const timeoutMs = options.timeout || API_CONFIG.TIMEOUT;
+
+  // Add validation for URL
+  if (!url || typeof url !== "string") {
+    throw new Error(`Invalid URL provided: ${url}`);
+  }
+
+  console.log("⚙️ Request config:", { timeoutMs, url });
 
   // Handle async header values first (like getUserIP)
   const resolvedHeaders = {};
@@ -63,24 +175,44 @@ export const apiRequest = async (url, options = {}) => {
     }
   }
 
-  // Build proper fetch configuration
+  // Build proper fetch configuration with Railway-optimized headers
   const config = {
     method: options.method || "GET",
     mode: "cors",
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
       Accept: "application/json",
+      "User-Agent": "Influbazzar-Frontend/1.0.0",
+      "Cache-Control": "no-cache",
+      // Railway-specific headers
+      "X-Requested-With": "XMLHttpRequest",
+      "Access-Control-Allow-Credentials": "true",
+      // Keep ngrok header for backward compatibility during testing
       "ngrok-skip-browser-warning": "true",
       ...resolvedHeaders,
     },
     ...(options.body && { body: options.body }),
   };
 
-  // Add authorization header if token exists
+  // Only set Content-Type for non-FormData requests
+  if (options.body && !(options.body instanceof FormData)) {
+    config.headers["Content-Type"] = "application/json";
+  }
+
+  // Add authorization header if token exists and is valid
   const token = localStorage.getItem("access_token");
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    // Check if token is still valid before sending it
+    if (tokenManager.isTokenValid(token)) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("🔑 Using valid JWT token");
+    } else {
+      console.warn("⚠️ JWT token is expired, clearing invalid token");
+      tokenManager.clearTokens();
+      throw new Error("Authentication token has expired. Please log in again.");
+    }
+  } else {
+    console.warn("⚠️ No JWT token found for authenticated request");
   }
 
   console.log("📋 Final request config:", {
@@ -90,12 +222,34 @@ export const apiRequest = async (url, options = {}) => {
     hasBody: !!config.body,
   });
 
+  // Use AbortController for timeout
+  const controller = new AbortController();
+  let isTimedOut = false;
+  let timeoutId;
+
+  // Add listener to debug abort events
+  controller.signal.addEventListener("abort", () => {
+    console.log("🚫 AbortController triggered:", {
+      isTimedOut,
+      url,
+      timeoutMs,
+      signal: controller.signal,
+      reason: controller.signal.reason || "Unknown reason",
+    });
+  });
+
   try {
-    // Use AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.log("⏰ Request timeout triggered");
-      controller.abort();
+    timeoutId = setTimeout(() => {
+      if (!controller.signal.aborted) {
+        console.log(
+          "⏰ Request timeout triggered after",
+          timeoutMs,
+          "ms for URL:",
+          url,
+        );
+        isTimedOut = true;
+        controller.abort();
+      }
     }, timeoutMs);
 
     const response = await fetch(url, {
@@ -109,21 +263,97 @@ export const apiRequest = async (url, options = {}) => {
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries()),
     });
+
+    // Handle 401 Unauthorized responses (invalid/expired tokens)
+    if (response.status === 401) {
+      console.warn("🔑 401 Unauthorized - JWT token is invalid or user doesn't exist in database");
+
+      // Clear invalid tokens
+      tokenManager.clearTokens();
+
+      // Dispatch a custom event to notify components about invalid authentication
+      window.dispatchEvent(new CustomEvent('auth:invalid', {
+        detail: {
+          message: 'Authentication token is invalid. Please log in again.',
+          status: 401,
+          url: url
+        }
+      }));
+
+      // Create a custom error with authentication context
+      const authError = new Error("Authentication failed: Invalid or expired token");
+      authError.status = 401;
+      authError.isAuthError = true;
+      throw authError;
+    }
 
     return response;
   } catch (error) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
     console.error("❌ API request failed:", error);
 
     if (error.name === "AbortError") {
-      throw new Error("Request timeout - the server took too long to respond");
+      if (isTimedOut) {
+        console.error("⏰ Request timed out:", {
+          url,
+          timeoutSeconds: timeoutMs / 1000,
+          error: error.message,
+        });
+        throw new Error(
+          `Request timeout - the server took longer than ${timeoutMs / 1000} seconds to respond. Please check your internet connection or try again later. URL: ${url}`,
+        );
+      } else {
+        console.warn("🚫 Request aborted without timeout - possible causes:", {
+          url,
+          timeoutMs,
+          error: error.message,
+          possibleCauses: [
+            "Component unmounted before request completed",
+            "Navigation away from page",
+            "Network connectivity issues",
+            "Server not responding",
+          ],
+        });
+        throw new Error(
+          `Request was cancelled. This might be due to navigation, network issues, or server problems. Please try again. URL: ${url}`,
+        );
+      }
     }
     if (error.message.includes("Failed to fetch")) {
       throw new Error(
         "Network error - please check your internet connection or the API server may be down",
       );
     }
+
+    // Enhanced CORS error detection and messaging
+    if (
+      error.message.includes("CORS") ||
+      error.message.includes("Access-Control-Allow-Origin")
+    ) {
+      console.error("🚨 CORS Error Detected:", {
+        url,
+        error: error.message,
+        possibleCauses: [
+          "Backend server not configured for CORS",
+          "ngrok tunnel not properly configured",
+          "Backend service is down or misconfigured",
+        ],
+        solutions: [
+          "Ask backend developer to add CORS headers",
+          "Verify ngrok tunnel is active",
+          "Check backend service status",
+        ],
+      });
+
+      throw new Error(
+        "Server configuration error (CORS). The backend needs to allow requests from this domain. Please contact the backend developer to configure CORS headers.",
+      );
+    }
+
     throw error;
   }
 };
@@ -218,7 +448,10 @@ export const testApiConnectivity = async () => {
     console.log("Test 1: Testing basic connectivity to:", API_CONFIG.BASE_URL);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => {
+      console.log("⏰ Connectivity test timeout for:", API_CONFIG.BASE_URL);
+      controller.abort();
+    }, 5000); // 5 second timeout
 
     const response = await fetch(API_CONFIG.BASE_URL, {
       method: "GET",
@@ -260,7 +493,10 @@ export const testApiConnectivity = async () => {
     console.log("Test 2: Testing API endpoint with CORS");
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => {
+      console.log("⏰ API endpoint test timeout");
+      controller.abort();
+    }, 5000);
 
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/auth/login`, {
       method: "POST",
@@ -344,7 +580,10 @@ export const checkApiHealth = async () => {
     // For now, just test a simple connectivity to the base URL
     // Since we don't know if /health endpoint exists, we'll just test basic connectivity
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => {
+      console.log("⏰ Health check timeout");
+      controller.abort();
+    }, 5000);
 
     const response = await fetch(API_CONFIG.BASE_URL, {
       method: "HEAD", // Use HEAD instead of GET to avoid CORS issues

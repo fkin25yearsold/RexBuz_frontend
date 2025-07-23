@@ -100,6 +100,31 @@ const HeroSection = () => {
             </button>
           </div>
 
+          {/* Demo Button */}
+          <div className="mt-6 animate-in stagger-5">
+            <button
+              onClick={() => (window.location.hash = "onboarding-demo")}
+              className="group text-blue-600 dark:text-purple-400 hover:text-blue-700 dark:hover:text-purple-300 font-medium text-lg transition-colors duration-200"
+            >
+              <span className="flex items-center justify-center gap-2">
+                🚀 Try Creator Onboarding Demo
+                <svg
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+
           {/* Platform Icons */}
           <div className="flex justify-center items-center gap-8 pt-8 animate-in stagger-5">
             <div

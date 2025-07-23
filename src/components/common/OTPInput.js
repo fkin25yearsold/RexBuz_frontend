@@ -82,7 +82,7 @@ const OTPInput = ({
           onPaste={handlePaste}
           disabled={disabled}
           className={`
-            w-12 h-12 text-center text-lg font-semibold rounded-lg border-2 
+                                    w-12 h-12 text-center text-lg font-semibold rounded-lg border-2 
             bg-white dark:bg-gray-800 text-gray-900 dark:text-white
             transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50
             ${

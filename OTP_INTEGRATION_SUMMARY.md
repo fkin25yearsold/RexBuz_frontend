@@ -171,7 +171,7 @@ const [phoneOtpSent, setPhoneOtpSent] = useState(false);
 ```javascript
 const requestOTP = async (emailOrPhone, otpType) => {
   const response = await fetch(
-    "https://bc282d8ad0e2.ngrok-free.app/api/v1/auth/request-otp",
+    "https://986f68cc5cd6.ngrok-free.app/api/v1/auth/request-otp",
     {
       method: "POST",
       headers: {

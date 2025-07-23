@@ -102,7 +102,7 @@ Terms: ✓ checked
 
 ## 🌐 API Endpoint
 
-The form connects to: `https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup`
+The form connects to: `https://986f68cc5cd6.ngrok-free.app/api/v1/auth/signup`
 
 ## 📱 Role Selection Options
 

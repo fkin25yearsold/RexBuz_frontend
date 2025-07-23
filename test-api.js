@@ -14,13 +14,14 @@ const testSignupAPI = async () => {
   try {
     console.log("Testing signup API...");
     const response = await fetch(
-      "https://bc282d8d0e2.ngrok-free.app/api/v1/auth/signup",
+      "https://buz-production.up.railway.app/api/v1/auth/signup",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "ngrok-skip-browser-warning": "true",
+          "Cache-Control": "no-cache",
+          "X-Requested-With": "XMLHttpRequest",
         },
         body: JSON.stringify(testData),
       },

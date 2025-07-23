@@ -3,7 +3,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useUser } from "../../contexts/UserContext";
 import Button from "../common/Button";
 import VerificationSection from "../common/VerificationSection";
-import { API_ENDPOINTS, apiRequest } from "../../config/api";
+import { API_ENDPOINTS, apiRequest, safeJsonParse } from "../../config/api";
 
 const OtpVerificationPage = () => {
   const { isDark } = useTheme();
@@ -49,16 +49,16 @@ const OtpVerificationPage = () => {
         }),
       });
 
+      const data = await safeJsonParse(response);
+
       if (!response.ok) {
-        const errorData = await response.json();
         throw new Error(
-          errorData.detail ||
-            errorData.message ||
+          data?.detail ||
+            data?.message ||
             `Failed to send ${otpType} OTP`,
         );
       }
 
-      const data = await response.json();
       return { success: true, data };
     } catch (error) {
       console.error(`${otpType} OTP Request Error:`, error);
@@ -85,14 +85,14 @@ const OtpVerificationPage = () => {
         }),
       });
 
+      const data = await safeJsonParse(response);
+
       if (!response.ok) {
-        const errorData = await response.json();
         throw new Error(
-          errorData.detail || errorData.message || "Invalid email OTP",
+          data?.detail || data?.message || "Invalid email OTP",
         );
       }
 
-      const data = await response.json();
       setEmailVerified(true);
       return { success: true, data };
     } catch (error) {
@@ -123,14 +123,14 @@ const OtpVerificationPage = () => {
         }),
       });
 
+      const data = await safeJsonParse(response);
+
       if (!response.ok) {
-        const errorData = await response.json();
         throw new Error(
-          errorData.detail || errorData.message || "Invalid phone OTP",
+          data?.detail || data?.message || "Invalid phone OTP",
         );
       }
 
-      const data = await response.json();
       setPhoneVerified(true);
       return { success: true, data };
     } catch (error) {
